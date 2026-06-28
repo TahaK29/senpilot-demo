@@ -31,10 +31,10 @@ jobs:
           PYTHONUNBUFFERED: "1"
           AGENT_EMAIL: ${{ secrets.AGENT_EMAIL }}
           AGENT_EMAIL_PASSWORD: ${{ secrets.AGENT_EMAIL_PASSWORD }}
-          IMAP_HOST: ${{ secrets.IMAP_HOST }}
-          IMAP_PORT: ${{ secrets.IMAP_PORT }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          IMAP_HOST: imap.gmail.com
+          IMAP_PORT: "993"
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: "587"
           HEADLESS: "true"
           MAX_DOWNLOADS: "10"
           USE_LLM_FALLBACK: "false"
@@ -47,3 +47,11 @@ jobs:
           UARB_URL: https://uarb.novascotia.ca/fmi/webd/UARB15
           SCRAPE_TIMEOUT_MS: "60000"
           MAX_SCRAPE_RETRIES: "2"
+
+      - name: Upload error screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: error-screenshots
+          path: downloads/errors/*.png
+          if-no-files-found: ignore

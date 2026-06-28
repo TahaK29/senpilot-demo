@@ -148,15 +148,30 @@ class UARBScraper:
                 browser.close()
 
     def _open_matter(self, page: Page, matter_number: str) -> None:
-        page.goto(self.settings.uarb_url, wait_until="domcontentloaded")
-        page.wait_for_load_state("domcontentloaded")
-        page.wait_for_timeout(5000)
-        self._fill_matter_input(page, matter_number)
-        self._click_search(page)
-        page.get_by_text("Back to Search Results").first.wait_for(timeout=self.settings.scrape_timeout_ms)
-        result_text = _page_text(page)
-        if matter_number not in result_text:
-            raise ScrapeError(f"Matter page loaded, but {matter_number} was not found")
+        last_error: Exception | None = None
+        for attempt in range(1, 4):
+            try:
+                page.goto(
+                    self.settings.uarb_url,
+                    wait_until="domcontentloaded",
+                    timeout=self.settings.scrape_timeout_ms,
+                )
+                page.wait_for_load_state("domcontentloaded")
+                page.wait_for_timeout(5000)
+                self._fill_matter_input(page, matter_number)
+                self._click_search(page)
+                page.get_by_text("Back to Search Results").first.wait_for(timeout=self.settings.scrape_timeout_ms)
+                result_text = _page_text(page)
+                if matter_number not in result_text:
+                    raise ScrapeError(f"Matter page loaded, but {matter_number} was not found")
+                return
+            except Exception as exc:
+                last_error = exc
+                logger.info("Open matter attempt %s failed: %s", attempt, exc)
+                if attempt < 3:
+                    page.wait_for_timeout(3000)
+
+        raise ScrapeError(str(last_error))
 
     def _fill_matter_input(self, page: Page, matter_number: str) -> None:
         candidate_selectors = [
