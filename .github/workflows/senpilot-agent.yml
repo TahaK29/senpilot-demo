@@ -1,0 +1,49 @@
+name: Senpilot Email Agent
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browser
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run email agent
+        run: python -m app.main
+        env:
+          PYTHONUNBUFFERED: "1"
+          AGENT_EMAIL: ${{ secrets.AGENT_EMAIL }}
+          AGENT_EMAIL_PASSWORD: ${{ secrets.AGENT_EMAIL_PASSWORD }}
+          IMAP_HOST: ${{ secrets.IMAP_HOST }}
+          IMAP_PORT: ${{ secrets.IMAP_PORT }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          HEADLESS: "true"
+          MAX_DOWNLOADS: "10"
+          USE_LLM_FALLBACK: "false"
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          LANGFUSE_BASE_URL: https://cloud.langfuse.com
+          LANGFUSE_TRACING_ENVIRONMENT: "production"
+          DOWNLOAD_ROOT: downloads
+          UARB_URL: https://uarb.novascotia.ca/fmi/webd/UARB15
+          SCRAPE_TIMEOUT_MS: "60000"
+          MAX_SCRAPE_RETRIES: "2"
