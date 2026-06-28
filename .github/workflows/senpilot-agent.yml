@@ -41,7 +41,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
-          LANGFUSE_BASE_URL: https://cloud.langfuse.com
+          LANGFUSE_BASE_URL: https://us.cloud.langfuse.com
           LANGFUSE_TRACING_ENVIRONMENT: "production"
           DOWNLOAD_ROOT: downloads
           UARB_URL: https://uarb.novascotia.ca/fmi/webd/UARB15
