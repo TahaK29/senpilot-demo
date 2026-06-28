@@ -20,6 +20,29 @@ The LangGraph workflow is:
 
 LangGraph is used to make the workflow explicit, modular, traceable, and easy to extend. It also makes failure routing clear: if Playwright fails, the graph routes to a failure email instead of crashing.
 
+## Project Map
+
+- `app/main.py` loads configuration, polls unread emails, starts the LangGraph workflow, and marks processed messages as read.
+- `app/config.py` loads `.env` values such as email credentials, browser settings, download limits, and scraper timeouts.
+- `app/email_client.py` uses IMAP to read unread emails and SMTP to send reply emails with optional ZIP attachments.
+- `app/parser.py` deterministically extracts the matter number and requested document type from the email body.
+- `app/llm_parser.py` optionally uses a Hugging Face LLM fallback when deterministic parsing cannot understand a request.
+- `app/schemas.py` defines Pydantic models for parsed requests, matter metadata, and download results.
+- `app/state.py` defines the shared LangGraph state dictionary passed between workflow nodes.
+- `app/graph.py` defines the LangGraph nodes and routing for parsing, validation, scraping, downloading, zipping, and sending responses.
+- `app/scraper.py` uses Playwright to control Chromium, search the UARB site, collect matter metadata, and download documents.
+- `app/zip_service.py` compresses downloaded files into one ZIP attachment.
+- `app/response_writer.py` creates the success, clarification, and failure email text.
+- `tests/test_parser.py` checks the deterministic parser against common request formats.
+
+## Component Basics
+
+- LangGraph is the workflow engine: each node performs one step, and routing functions decide whether to continue, retry, ask for clarification, or fail.
+- IMAP is used for receiving email: the agent connects to Gmail, searches for unread messages, and fetches their contents.
+- SMTP is used for sending email: the agent logs into Gmail, builds a reply, attaches the ZIP if available, and sends it back to the requester.
+- Playwright is browser automation: it opens Chromium, clicks through the UARB FileMaker site, reads visible table rows, and opens document previews.
+- ZIP creation uses Python's built-in `zipfile` library to package the downloaded PDFs into one attachment.
+
 ## Design Choices
 
 Playwright is used because the UARB site is interactive and uses buttons, tabs, and document preview actions. Browser automation is deterministic because regulatory document retrieval needs reliability and repeatability. The implementation does not let an LLM control the browser.
@@ -40,7 +63,7 @@ A lightweight Hugging Face fallback can be enabled for ambiguous natural languag
 
 Pydantic validates the parsed request before the workflow touches the website. It also validates matter metadata and download results as they move through the graph.
 
-LangSmith tracing can be enabled later through environment variables. This MVP keeps those variables in `.env.example` but does not require tracing.
+Langfuse tracing can be enabled through environment variables. The agent still runs without tracing because Langfuse is only used for observability, not for workflow logic.
 
 ## Setup
 
